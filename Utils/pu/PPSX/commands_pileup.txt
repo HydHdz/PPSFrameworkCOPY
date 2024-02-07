@@ -1,0 +1,10 @@
+# /afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions18/13TeV/PileUp/UltraLegacy/pileup_latest.txt
+
+
+pileupCalc.py -i crab_json_last/bjetA/processedLumis.json --inputLumiJSON pileup_2018.txt --calcMode true --minBiasXsec 69200 --maxPileupBin 100 --numPileupBins 100 pileupA.root
+
+pileupCalc.py -i crab_json_last/bjetB/processedLumis.json --inputLumiJSON pileup_2018.txt --calcMode true --minBiasXsec 69200 --maxPileupBin 100 --numPileupBins 100 pileupB.root
+
+pileupCalc.py -i crab_json_last/bjetC/processedLumis.json --inputLumiJSON pileup_2018.txt --calcMode true --minBiasXsec 69200 --maxPileupBin 100 --numPileupBins 100 pileupC.root
+
+pileupCalc.py -i crab_json_last/bjetD/processedLumis.json --inputLumiJSON pileup_2018.txt --calcMode true --minBiasXsec 69200 --maxPileupBin 100 --numPileupBins 100 pileupD.root

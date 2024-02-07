@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<plots>
+        <drawing> 
+		<enable>1</enable>
+                <signal_file>"/eos/cms/store/group/phys_exotica/PPS-Exo/Ntuples/Ntuples_v36/bjet_2018.root"</signal_file> 
+                <bkg_file>"/eos/cms/store/group/phys_exotica/PPS-Exo/Ntuples/Ntuples_v36/sd_pythia8_pt60.root"</bkg_file> 
+                <variable_name>"fabs(missEt_phi-dijetPhi)"</variable_name> 
+                <title_and_axis_name>"; phi; PDF"</title_and_axis_name> 
+		<bin_size>40</bin_size>
+                <first_bin>0</first_bin> 
+		<last_bin>1000</last_bin>
+		<!--Special characters: "&" to "&amp;"
+					"<" to "&lt;" 
+					">" to "&gt;" 
+		-->
+		<signal_cuts>"dijetPt&gt;30&amp;&amp;HLT_Any==1"</signal_cuts>
+                <bkg_cuts>"dijetPt&gt;30&amp;&amp;HLT_Any==1"</bkg_cuts>
+                <tagname>"control_deltaphi"</tagname>
+        </drawing>
+</plots>

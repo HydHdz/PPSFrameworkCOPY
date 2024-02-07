@@ -1,0 +1,168 @@
+# PPS Framework
+
+This package is used for the Missing Mass Search analysis. The first tool acts on the CMSSW official datasets producing a root NTuple (Skimmer) which has a set of pre-selected CMSSW collections (and physics-computing objects) event by event. After that, another tool should be launched to produce the final analysis file (Analyzer). 
+
+## Description
+
+| Folder Name       | Comments |
+| ------------- |:-------------:|
+| Skimmer | to store CMSSW pre-selected objects in a NTuple (step 1)|
+| Analyzer | produce the final analysis Ttree (step 2) |
+| Plotter | produce automatic plots for your final analysis (using Ttree format) |
+| Utils | helpful scripts and commands |
+
+## Installation
+
+Download the package from git. It is also important to set your voms-certificate as well as CMSSW (cmsenv) where your plugins are set. 
+
+```bash
+SCRAM_ARCH=slc7_amd64_gcc700; export SCRAM_ARCH
+cmsrel CMSSW_10_6_17_patch1
+cd CMSSW_10_6_17_patch1/src
+cmsenv
+git clone https://github.com/dfigueiredo/PPSFramework.git -b CMSSW_10_6_17_patch1_2023
+git checkout -- CalibPPS/ESProducers
+cd PPSFramework/
+scram b -j 8
+source set_environment.sh
+cd working
+```
+
+Once CMSSW and your package is installed, you need to setup everytime you connect in a new terminal:
+
+```bash
+SCRAM_ARCH=slc7_amd64_gcc700; export SCRAM_ARCH (or setenv SCRAM_ARCH slc7_amd64_gcc700 for tcsh) 
+cd CMSSW_10_6_17_patch1/src
+cmsenv
+```
+
+# QuickAnalyzer
+
+This package includes a quick analyzer to check for instance the evolution of the number of protons compared to the luminosity. Moreover, this analyzer produces the protons momenta loss distributions for each detector, which can be needed 
+to be randomly added to the event of a Monte Carlo generator (or to perform out-of-acceptance studies) for instance. Moreover, there is an option to select events with leading and second leading jet bTag < 0.2 (as required for PPS SX analysis background templates). For instance, with a zerobias sample: 
+
+
+```bash
+cmsRun RunQuickAnalysis.pycmsRun RunQuickAnalysis.py enableBtag=True physics=zerobias
+```
+
+# Skimmer
+
+Used to create the NTuple (Skimmer) from a CMSSW dataset type format (AOD or miniAOD).
+
+## Usage
+
+As an example, edit the file working/RunMissingMassSearches.py and substitute the line:
+
+```bash
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
+```
+
+for
+
+
+```bash
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(5000) )
+```
+
+After that, run the following command:
+
+```bash
+cmsRun RunMissingMassSearches.py year=2017 physics=bjet trigger=True era=D mode=data
+```
+
+Please, pay attention that the options mode (data or mc), year (2017 or 2018) must be set correctly accordingly to the dataset which has been choosen. If you are not using crab, remember to change the input file name to run locally (in general for a test or to debug the code).
+
+## Options
+
+| Options       | Explanation | Comments |
+| ------------- |:-------------:|-------------:|
+| physics      | (string) muon, electron, bjet, displacedjet, emu, zerobias | to set the correct trigger path for a specific dataset stream |
+| mode      | (string) data, mc | If a data sample, it must be set accordingly (same for monte carlo) |
+| era      | (string) A, B, C, D | It depends of the year. Used to load PPS proton reconstruction parameters, cutoff or for simulation |
+| year   | (string) 2017, 2018 | To deal with HLT names and conditions |
+| prescales   | (bool) False or True | enable/disable trigger prescales values. Default is False (only for data) |
+| trigger   | (bool) False or True | enable/disable the trigger. Default is True. |
+| unmatching   | (bool) False or True | True: leptons and jets not associated in the same cone. Default is false |
+| ppstagging   | (bool) False or True | True: selecting events with exactly one proton per arm. Default is true |
+| antifilter   | (bool) False or True | True: selecting events with no protons per arm. Default is false. It must be used together with ppstagging=True|
+| debugging   | (bool) False or True | True: enabling skimmer debugger. Default is false |
+| reduced   | (bool) False or True | True: removing all the leptons information from the final TTree. Default is true |
+
+# Analyzer
+
+The analyzer is used to produce a TTree after some analysis basic cuts and selecting events with one proton per arm. As an example, you can now run the Analyzer to process the NTuple produced by the previous skimmer (RunMissinMassSearches.py):
+
+```bash
+cd ../Analyzer
+./MissingMassNtupleAnalyzer --f ../working/output.root --year 2017 --era D --mode data --physics bjet
+```
+
+Where all the options are following the Skimmer options (same year, era, mode, physics). The output.root file was produced by the Skimmer (RunMissingMassSearches.py). Now, the output file (NTuple_data_bjet.root) can be opened and the analysis variables can be plotted direclty from the Ttree (extra cuts can also be applied).
+
+## Compilation
+
+Everytime the source code is changed, you need to recompile it to run (MissingMassNtupleAnalyzer.cc):
+
+```bash
+make clean
+make
+```
+
+## Options
+
+| Options       | Comments |
+| ------------- | -------------:|
+| --protonfile | Used to create, from the detector data per physics (muon, electron, bjets), a root file with Multi and Single Xi histograms. This file is used for the --random option |
+| --eventfile | Used to create, from the detector data, a text data format with golded selected events (to be visualized later on Fireworks) |
+| --short | Option to process only the proton selection, skipping the jets or leptons selection |
+| --notrigger | Skip the trigger selection |
+| --random | If there is no proton in one arm, it adds randomly from the Xi data distribution (single and multi). Used for MC cases |
+| --zerobias | Only for zerobias datasets to study background |
+| --noppstagging | Without proton selection (one proton per arm) |
+| --debugging | For debugging the selections. It prints some outputs on the screen |
+| --pudata && --pumc | For pileup reweighting in the MC. These options must be used together. They are loading the pileup histogram file for data and MC respectively. The histogram name must be pileup, otherwise the code will raise an error |
+| --help | It prints all the options accepted by the code |
+| --mode | mc or data |
+| --era | A,B,C,D,E or F |
+| --physics | electron, muon, bjet or displacedjet (to enable each trigger menu) |
+| --jobid | It adds a string in the end of the output filename. Used in condor submission to avoid file overwriting (string) |
+| --output | It creates an output folder name (string) |
+| --f | Input file name |
+
+**Important**: the options "--protonfile" and "--random" *can not* be used together! In case you do not have the random file with the protons xi, first run --protonfile to create the root file histogram used for the --random option. Moreover, the code is automatically detecting when the input TTree is reduced.
+
+## Examples
+
+### Pythia8 SD Top
+
+```bash
+./MissingMassNtupleAnalyzer --f skimmer_output.root --year 2017 --era C --mode mc --physics muon --random --jobid 0
+```
+
+### Toy MC (Higgs or Z)
+
+```bash
+./MissingMassNtupleAnalyzer --f skimmer_output.root --year 2017 --era C --mode mc --physics bjet --jobid 0
+```
+
+### Data 
+
+```bash
+./MissingMassNtupleAnalyzer --f skimmer_output.root --year 2017 --era C --mode data --physics displacedjet --jobid 0
+```
+
+### Creating Random File
+
+```bash
+./MissingMassNtupleAnalyzer --f skimmer_output.root --year 2017 --era D --mode data --physics bjet --protonfile
+```
+the file RandomProtons.root will be created.
+
+### Pile-up ReWeighting (Only for MC)
+
+```bash
+./MissingMassNtupleAnalyzer --f skimmer_output.root --year 2017 --era C --mode mc --physics bjet --pudata pileupdata.root --pumc pileupmc.root
+```
+
+The Class LumiReWeighting loads the pileup calculated from data and the pileup emulated for the montecarlo and compute the weight for the MC event by event, saving a branch in the TTree output. Later on, every event from your TTree should be weighted by this value when histograms are plotted. More information can be find in the [CMS Pileup Twiki](https://twiki.cern.ch/twiki/bin/view/CMS/PileupJSONFileforData#Recommended_cross_section), [CMS Lumi Recomendations Twiki](https://twiki.cern.ch/twiki/bin/view/CMS/LumiRecommendationsRun3) and [CMS Pileup MC tool](https://twiki.cern.ch/twiki/bin/viewauth/CMS/PileupMCReweightingUtilities).
